@@ -1,3 +1,72 @@
+import { createClient } from "@/utils/supabase/server"; // Import server client
+import { redirect } from "next/navigation";
+import { UserType } from "@/app/_lib/types";
+import { UsersType } from "@/app/_lib/types";
+
+export async function activeUser(): Promise<UserType> {
+  const supabase = await createClient();
+
+  // Fetch authenticated user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+    throw new Error("User not authenticated"); // Fallback for TypeScript
+  }
+
+  const { data: userData, error: userFetchError } = await supabase
+    .from("users")
+    .select(
+      "first_name, last_name, email, role, img_gen_left_today, total_img_gen"
+    )
+    .eq("id", user.id)
+    .single();
+
+  if (userFetchError || !userData) {
+    redirect("/login");
+    throw new Error("Failed to fetch user data"); // Fallback for TypeScript
+  }
+
+  return {
+    firstName: userData.first_name || "Unknown",
+    lastName: userData.last_name || "User",
+    imagesLeft: userData.img_gen_left_today || 0,
+    totalImagesGenerated: userData.total_img_gen || 0,
+    email: userData.email || "email",
+    role: userData.role || "writer",
+  };
+}
+
+export async function fetchAllUsers(): Promise<UsersType[]> {
+  const supabase = await createClient();
+
+  // Fetch all users from the database
+  const { data: users, error } = await supabase
+    .from("users")
+    .select(
+      "id, first_name, last_name, email, role, img_gen_left_today, total_img_gen"
+    );
+
+  if (error || !users) {
+    console.error("Error fetching users:", error);
+    redirect("/login");
+    throw new Error("Failed to fetch users");
+  }
+
+  // Map and return users in expected structure
+  return users.map((user) => ({
+    id: user.id,
+    firstName: user.first_name || "Unknown",
+    lastName: user.last_name || "User",
+    email: user.email || "email",
+    role: user.role || "writer",
+    imagesLeft: user.img_gen_left_today || 0,
+    totalImagesGenerated: user.total_img_gen || 0,
+  }));
+}
+
 export type Image = {
   id: string;
   url: string;

@@ -3,22 +3,31 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
-export default function page() {
+export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
-    // Simulate a user object (set to null for logged-out state)
-    const user = { username: "testuser", session: "active" }; // Replace with null to simulate logged-out
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
-    if (user.session === "active") {
-      // User is logged in, redirect to /dashboard
-      router.push("/dashboard");
-    } else {
-      // User is not logged in, redirect to /login
-      router.push("/login");
-    }
+      if (error) {
+        console.error("Error during session check:", error);
+        router.push("/login");
+      } else if (session) {
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
-  return null; // This component doesn't render any UI due to the redirection
+  return null;
 }

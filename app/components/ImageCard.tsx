@@ -11,13 +11,48 @@ type Props = {
 const ImageCard: React.FC<Props> = ({ image }) => {
   const handleCopy = async (url: string) => {
     try {
+      // Fetch the image
       const response = await fetch(url);
       const blob = await response.blob();
-      const clipboardItem = new ClipboardItem({ [blob.type]: blob });
-      await navigator.clipboard.write([clipboardItem]);
-      alert("Image copied to clipboard!");
+
+      // Create an image element
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.src = URL.createObjectURL(blob);
+
+      img.onload = async () => {
+        // Create a canvas to process the image
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0);
+
+        // Convert canvas to blob
+        canvas.toBlob(async (canvasBlob) => {
+          if (canvasBlob) {
+            try {
+              await navigator.clipboard.write([
+                new ClipboardItem({
+                  "image/png": canvasBlob,
+                }),
+              ]);
+              // alert("Image copied to clipboard!");
+            } catch (clipboardError) {
+              console.error("Clipboard write failed:", clipboardError);
+              // alert("Could not copy image");
+            }
+          }
+        }, "image/png");
+      };
+
+      img.onerror = () => {
+        // alert("Failed to load image");
+        console.log("Failed to load image");
+      };
     } catch (error) {
-      console.error("Failed to copy image:", error);
+      console.error("Image copy error:", error);
+      // alert("Could not copy image");
     }
   };
 

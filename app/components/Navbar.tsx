@@ -8,24 +8,24 @@ import {
   FaCogs,
   FaUserCog,
   FaSignOutAlt,
-} from "react-icons/fa"; // Added icons for menu items
+} from "react-icons/fa";
 
 interface NavbarProps {
-  userName: string; // Prop to pass the user's name dynamically
+  userData: {
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
 }
 
-const Navbar: React.FC<NavbarProps> = ({ userName }) => {
-  // State to manage dropdown visibility
+const Navbar: React.FC<NavbarProps> = ({ userData }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  // Refs to detect click outside of dropdown and avatar
   const dropdownRef = useRef<HTMLDivElement>(null);
   const avatarRef = useRef<HTMLButtonElement>(null);
 
-  // Toggle dropdown visibility on avatar click
   const toggleDropdown = (): void => setIsDropdownOpen(!isDropdownOpen);
 
-  // Close dropdown if clicked outside
   const handleClickOutside = (e: MouseEvent): void => {
     if (
       dropdownRef.current &&
@@ -37,7 +37,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
     }
   };
 
-  // Attach event listener for clicks outside when the dropdown is open
   useEffect(() => {
     if (isDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
@@ -45,7 +44,6 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
       document.removeEventListener("mousedown", handleClickOutside);
     }
 
-    // Clean up event listener on component unmount
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
@@ -78,12 +76,11 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
           </ul>
         </div>
 
-        {/* Avatar with Dropdown */}
         <div className="relative">
           <button
             ref={avatarRef}
             className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-300 text-white"
-            onClick={toggleDropdown} // Open/close dropdown on click
+            onClick={toggleDropdown}
           >
             <FaUserCircle size={24} />
           </button>
@@ -93,7 +90,9 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
               ref={dropdownRef}
               className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-10"
             >
-              <div className="p-3 text-gray-700">Hi {userName}</div>
+              <div className="p-3 text-gray-700">
+                {userData.firstName} {userData.lastName}
+              </div>
               <ul className="text-sm">
                 <li>
                   <Link
@@ -104,24 +103,17 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
                     Profile
                   </Link>
                 </li>
-                {/* <li>
-                  <Link
-                    href="/settings"
-                    className="flex items-center px-4 py-2 hover:bg-gray-100"
-                  >
-                    <FaCogs className="mr-2" />
-                    Settings
-                  </Link>
-                </li> */}
-                <li>
-                  <Link
-                    href="/manage"
-                    className="flex items-center px-4 py-2 hover:bg-gray-100"
-                  >
-                    <FaUserCog className="mr-2" />
-                    Manage
-                  </Link>
-                </li>
+                {userData.role === "admin" && (
+                  <li>
+                    <Link
+                      href="/manage"
+                      className="flex items-center px-4 py-2 hover:bg-gray-100"
+                    >
+                      <FaUserCog className="mr-2" />
+                      Manage
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <button className="flex items-center w-full text-left px-4 py-2 hover:bg-gray-100">
                     <FaSignOutAlt className="mr-2" />
@@ -137,11 +129,4 @@ const Navbar: React.FC<NavbarProps> = ({ userName }) => {
   );
 };
 
-// Example of passing userName dynamically to the Navbar component
-const MyApp = () => {
-  const userName = "John Doe"; // Replace with dynamic user data
-
-  return <Navbar userName={userName} />;
-};
-
-export default MyApp;
+export default Navbar;
